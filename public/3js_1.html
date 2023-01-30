@@ -54,12 +54,12 @@
 			scene.add( antilineSegPlane );
 		
 		const boxMat = new THREE.MeshStandardMaterial({
-			opacity: 0.6,
+			opacity: 0.4,
 			transparent: true,
 			color: "white",
 			emissive: "blue",
-			emissiveIntensity: 0.1,
-			metalness: 0.5,
+			emissiveIntensity: 0.3,
+			metalness: 0,
 			roughness: 0,
 		})		
 		const geometryBox = new THREE.SphereGeometry(15,40,40);
@@ -197,23 +197,23 @@
 			boxMesh.scale.y = Math.abs(Math.cos(time * 0.4));
 			boxMesh.scale.z = Math.abs(Math.cos(time * 0.4));
 			boxMesh.material.opacity = Math.abs(Math.cos(time * 0.4))*0.9;
-
+			boxMesh.material.emissive.setRGB(Math.abs(Math.cos(time * 0.4)),Math.abs(Math.sin(time * -0.4)),Math.abs(Math.sin(time * 0.4)));
 
 			lightBox1.position.x = Math.cos( time * 0.7 ) * 5;
 			lightBox1.position.y = Math.cos( time * 0.5 ) * 5;
 			lightBox1.position.z = Math.sin( time * 0.3 ) * 5;
-			lightBox1.rotation.z = Math.cos( time * 0.2 );
+			lightBox1.rotation.x = Math.cos( time * 0.6 );
 
 
 			lightBox2.position.x = Math.sin( time * 0.7 ) * 5;
 			lightBox2.position.y = Math.cos( time * 0.5 ) * 5;
 			lightBox2.position.z = Math.cos( time * 0.3 ) * 5;
-			lightBox2.rotation.z = Math.sin( time * 0.2 );
+			lightBox2.rotation.y = Math.sin( time * 0.6 );
 
 			lightBox3.position.x = Math.cos( time * 0.3 ) * 5;
 			lightBox3.position.y = Math.sin( time * 0.5 ) * 5;
 			lightBox3.position.z = Math.cos( time * 0.3 ) * 5;
-			lightBox3.rotation.z = Math.cos( time * 0.2 );
+			lightBox3.rotation.z = Math.cos( time * -0.6 );
 
 			stats.update();
 			controls.update();
