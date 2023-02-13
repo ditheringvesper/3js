@@ -7,8 +7,9 @@
 	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 </head>
 
-<body style="padding: 0; border: 0; margin: 0">
-	<canvas class = "webgl"> </canvas>
+<body style="background-color:darkblue; padding: 0; border: 0; margin: 0; cursor:none; position: fixed;">
+	<canvas class = "webgl" style="position: fixed"> </canvas>
+	<div class="cursor" style="color:white; font-size: 30px; position: fixed; z-index:99;padding: 0; border: 0; margin: 0"> <span>?</span></div>
 	<!-- Import maps polyfill -->
 	<!-- Remove this when import maps will be widely supported -->
 	<script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
@@ -50,6 +51,7 @@
 
 		let textureLoader2 = new THREE.TextureLoader();
 		let windowTexture = textureLoader2.load("textures/newWindow.png");
+		windowTexture.magFilter = THREE.NearestFilter;
 		windowTexture.wrapS = THREE.RepeatWrapping;
 		windowTexture.wrapT = THREE.RepeatWrapping;
 		windowTexture.repeat.set(9,4);
@@ -208,7 +210,8 @@
 
 
 		// renderer 
-		const renderer = new THREE.WebGLRenderer({canvas, antilias:true});
+		const renderer = new THREE.WebGLRenderer({canvas, antilias:true, alspha: true});
+		renderer.setClearColor( 0x000000, 0 ); 
 		renderer.shadowMap.enabled = true;
 		renderer.shadowMap.type = THREE.PCFSoftShadowMap; 
 		renderer.setPixelRatio( window.devicePixelRatio );
@@ -231,6 +234,8 @@
 			if ( event.isPrimary === false ) return;
 			mouseX = event.clientX - WIDTH/2;
 			mouseY = event.clientY - HEIGHT/2;
+			var cursor = document.querySelector(".cursor");
+			cursor.style.transform = `translate3d(${event.clientX}px, ${event.clientY}px, 0)`;
 		}
 
 		function loop() {
@@ -250,15 +255,6 @@
 			antilineSegPlane.material.opacity = Math.abs(Math.sin(time * 0.5));
 
 			
-			for (let i = 0; i<=100; i++){
-				screenMesh.rotation.x = Math.sin(time * - 0.5);
-				// screenMesh.rotation.y = Math.cos(time * - 0.5);
-				// screenMesh.rotation.z = Math.cos(time * - 0.5);
-				// screenMesh.scale.x = Math.abs(Math.cos(time * 0.4));
-				// screenMesh.scale.y = Math.abs(Math.cos(time * 0.4));
-				// screenMesh.scale.z = Math.abs(Math.cos(time * 0.4));
-				// screenMat.opacity = Math.abs(Math.cos(time * - 0.4))* 0.9;
-			}
 			screenMesh.rotation.x = Math.sin(time * - 0.5);
 			screenMesh.rotation.y = Math.cos(time * - 0.5);
 			screenMesh.rotation.z = Math.cos(time * - 0.5);

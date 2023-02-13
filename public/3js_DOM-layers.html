@@ -1,18 +1,86 @@
-<!DOCTYPE html>
 <html lang="en">
 
 <head>
-	<title> 3js_2 </title>
+	<title> 3js_dom-layer </title>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<style>
+		:root{
+			/* cursor: none; */
+		}
+		body{
+			padding: 0; 
+			border: 0; 
+			margin: 0;
+			background-color: lightblue;
+			z-index: -10;
+			position: fixed;
+		}
+
+		.webgl{
+			/* z-index: 100; */
+			position: fixed;
+			width: 100%;
+			height: 100%;
+		}
+
+		.cursorLayer{
+			background-color: transparent;
+			position: fixed;
+			z-index: 5;
+			width: 100%;
+			height: 100%;
+			visibility: hidden;
+		}
+		.textLayer{
+			background-color: blue;
+			position: fixed;
+			z-index: 3;
+			width: 100%;
+			height: 100%;
+			visibility: hidden;
+		}
+		/* .BGLayer{
+			position: fixed;
+			z-index: 2;
+			width: 100vw;
+			height: 100vh;
+			visibility: hidden;
+		} */
+
+		#cursor{
+			color: white; 
+			font-size: 30px; 
+			position: fixed; 
+			z-index:999;
+			padding: 0; 
+			border: 0; 
+			margin: 0;
+		}
+	</style>
 </head>
 
-<body style="padding: 0; border: 0; margin: 0">
+<body>
 	<canvas class = "webgl"> </canvas>
-	<!-- Import maps polyfill -->
-	<!-- Remove this when import maps will be widely supported -->
-	<script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
+	<canvas class = "cursorLayer"></canvas>
+	<canvas class = "textLayer"></canvas>
+	<!-- <canvas class = "BGLayer"></canvas> -->
 
+
+	<!-- <div class="unbotheredTXT"> <span> a lot of text here not to be bothered </span></div> -->
+
+	<div id="cursor">
+		<!-- <span></span> -->
+		<img id="curImg" src="textures/cursor.png" style="visibility:hidden; width:30px;">
+		<img id="BGImg" src="textures/blankbrowserpage.png" style="visibility:hidden">
+		</div>
+
+	<div class="videos" style="visibility:hidden">
+		<video id="video1" loop autoplay muted crossOrigin="anonymous" playsinline>
+			<source src="/textures/3js_2-transparency update.mp4" type="video/mp4"></video>
+	</div>
+	
+	<script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
 	<script type="importmap">
         {
             "imports": {
@@ -20,204 +88,251 @@
                 "three/addons/": "./three/examples/jsm/"
             }
         }
-    </script>
+    </script>	
 
+	
 	<script type="module">
 		import * as THREE from 'three';
-
 		import Stats from 'three/addons/libs/stats.module.js';
-
 		import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-		import { Lensflare, LensflareElement } from 'three/addons/objects/Lensflare.js';
 		const clock = new THREE.Clock();
 		const canvas = document.querySelector(".webgl");
 		const WIDTH = window.innerWidth, HEIGHT = window.innerHeight;
 		var mouseX, mouseY;
+		var posX, posY, curX, curY;
+		var textFill="啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊";
+
 
 		// scene
 		const scene = new THREE.Scene();
 
-		// stats
-		const stats = new Stats();
-			// canvas.appendChild(stats.dom);
+		// some DOM elements pre-setup
+		// var video1 = document.querySelector("#video1");
+		// video1.load();
+		// video1.play();
 
-		// image texture
-		let textureLoader1 = new THREE.TextureLoader();
-		let textTexture = textureLoader1.load("textures/lensflare/lens-flare-guang-dotted.png");
-		textTexture.wrapS = THREE.RepeatWrapping;
-		textTexture.wrapT = THREE.RepeatWrapping;
-		textTexture.repeat.set(6, 4);
+		// CANVAS for all DOM layers
+		var curImg = document.querySelector("#curImg");
+		var cursorLayer = document.querySelector('.cursorLayer');
+		var cursorCtx = cursorLayer.getContext('2d');
+		cursorLayer.width = WIDTH; cursorLayer.height = HEIGHT;
+		// cursorCtx.strokeRect(4, 4, cursorLayer.width, cursorLayer.height);
 
-		let textureLoader2 = new THREE.TextureLoader();
-		let windowTexture = textureLoader2.load("textures/newWindow.png");
-		windowTexture.wrapS = THREE.RepeatWrapping;
-		windowTexture.wrapT = THREE.RepeatWrapping;
-		windowTexture.repeat.set(9,4);
+		var textLayer = document.querySelector('.textLayer');
+		var textCtx = textLayer.getContext('2d');
+		textLayer.width = WIDTH; textLayer.height = HEIGHT;
 
-		// forms
-		const lightBox = new THREE.PlaneGeometry(2,2);
-		var r, g, b;
-		const lineCol = new THREE.Color(r,g,b);
-		const geometryLines = linePoints(10,10,10);
-		const lineMat = new THREE.LineDashedMaterial( { color: "white", transparent: true, opacity:0.5, dashSize: 0.01, gapSize: 0.5, linewidth: 1} )
-		const lineSegPlane = new THREE.LineSegments( geometryLines, lineMat );
-			lineSegPlane.computeLineDistances();
-			lineSegPlane.castShadow = true; 
-			lineSegPlane.receiveShadow = true;			
-			scene.add( lineSegPlane );
-		const antilineSegPlane = new THREE.LineSegments( geometryLines, new THREE.LineDashedMaterial( { color: "white", opacity:1, transparent: true, dashSize: 0.001, gapSize: 1, linewidth: 5} ));
-			antilineSegPlane.computeLineDistances();
-			antilineSegPlane.castShadow = true; 
-			antilineSegPlane.receiveShadow = true;	
-			scene.add( antilineSegPlane );
-		
-		const screenMat = new THREE.MeshStandardMaterial({
-			opacity: 0.8,
-			transparent: true,
-			// color: "white",
-			map: windowTexture,
-			// emissive: "white",
-			// emissiveIntensity: 0.6,
-			metalness: 0.1,
-			roughness: 0.8,
-		})		
-		const screenGeo = new THREE.SphereGeometry(1,40,40);
-		const screenMesh = new THREE.Group();
-		for (let i=0; i<= 20; i++){
-			const screenSingle = new THREE.Mesh(screenGeo, screenMat);
+		// var BGImg = document.querySelector("#BGImg");
+		// var BGLayer = document.querySelector('.BGLayer');
+		// var BGCtx = BGLayer.getContext('2d');
+		// BGLayer.width = WIDTH; BGLayer.height = HEIGHT;
 
-			screenSingle.scale.x = i + (i * 0.7);
-			screenSingle.scale.y = i + (i * 0.7);
-			screenSingle.scale.z = i + (i * 0.7);
+		window.addEventListener('mousemove', draw);
+		// BGImg.addEventListener('load', ()=>{
+		// 	BGCtx.drawImage(BGImg, 0, 0, BGLayer.width, BGLayer.height);
+		// });
+		document.body.addEventListener("keydown", (e)=> {
+			if (e.key == "Backspace"){
+				textFill = textFill.substring(0, textFill.length - 1);
+			}
+			else if (e.keyCode > 46 && e.keyCode < 90) {
+				textFill+=e.key;
+			}
+			textCtx.clearRect(0,0,textLayer.width, textLayer.height);
+			textUpdate();
+		});
 
-			screenSingle.rotation.x = i * Math.random();
-			screenSingle.rotation.x = i * Math.random();
-			screenSingle.rotation.x = i * Math.random();
+		function setPosition(e) {
+			const curRect = cursorLayer.getBoundingClientRect();
+			const textRect = textLayer.getBoundingClientRect();
+			const BGRect = BGLayer.getBoundingClientRect();
 
-			// screenSingle.material.opacity -= i*0.5;
+			// posX = e.clientX - rect.left
+			// posY = e.clientY - rect.top
+			}
 
-			screenMesh.add(screenSingle);
+			
+		function draw(e) {
+			// cursor layer
+			cursorCtx.clearRect(0,0,cursorLayer.width, cursorLayer.height);
+			onPointerMove(e);
+			cursorCtx.drawImage(curImg, curX, curY, 10, 14);
 
+			textUpdate();
+
+			// background layer
+
+			// ctx.beginPath();
+			// // use the values stored in our pen_style object
+			// ctx.lineWidth = 5;
+			// ctx.strokeStyle = 'white';
+
+			// ctx.moveTo(posX, posY);
+			// setPosition(e);
+			// ctx.lineTo(posX, posY);
+
+			// ctx.stroke();
+			}
+
+		function textUpdate(){
+			// text layer
+			textCtx.font = "100px monospace";
+			textCtx.fillStyle = "white";
+			textCtx.textAlign = "center";
+			textCtx.fillText(textFill, textLayer.width/2,textLayer.height/2);
 		}
-		scene.add( screenMesh );
 
-		screenMesh.castShadow = true; 
-		screenMesh.receiveShadow = true;	
 
-		// draw lines
-		function linePoints(width, height, depth){
-			width = width * 0.5,
-			height = height * 0.5,
-			depth = depth * 0.5;
-			const geometry = new THREE.BufferGeometry();
-				const position = [];
+		// textures
+			// color texture
+			let cursorTex = new THREE.CanvasTexture(cursorLayer);
+			cursorTex.magFilter = THREE.NearestFilter;
+			cursorTex.minFilter = THREE.NearestFilter;
 
-				for (let i = -100; i < 100; i+=0.2){
-					position.push(
-						- width * i * Math.random(), - height * i * Math.random(), - depth * i * Math.random(),
-						width * i * Math.random(), - height * i * Math.random(), - depth * i * Math.random(),
-						width * i * Math.random(), height * i * Math.random(), - depth * i * Math.random(),
-						width * i * Math.random(), height * i * Math.random(), depth * i * Math.random(),
-						- width * i * Math.random(), height * i * Math.random(), depth * i * Math.random(),
-						- width * i * Math.random(), - height * i * Math.random(), depth * i * Math.random(),
-						width * i * Math.random(), - height * i * Math.random(), depth * i * Math.random(),
+			let textTex = new THREE.CanvasTexture(textLayer);
+			textTex.magFilter = THREE.NearestFilter;
+			textTex.minFilter = THREE.NearestFilter;
 
-					// position.push(
-					// - width * i, - height * i, - depth * i,
-					// - width * i, height * i, - depth * i,
+			// let BGTex = new THREE.CanvasTexture(BGLayer);
+			// BGTex.magFilter = THREE.NearestFilter;
+			// BGTex.minFilter = THREE.NearestFilter;
 
-					// - width * i, height * i, - depth * i,
-					// width * i, height * i, - depth * i,
+			let textureLoader2 = new THREE.TextureLoader();
+			let windowTexture = textureLoader2.load("textures/newWindow.png");
+			windowTexture.magFilter =  THREE.NearestFilter;
+			windowTexture.wrapS = THREE.RepeatWrapping;
+			windowTexture.wrapT = THREE.RepeatWrapping;
+			windowTexture.repeat.set(1,1);
 
-					// width * i, height * i, - depth * i,
-					// width * i, - height * i, - depth * i,
+			// bump map
+			// video1.addEventListener( 'playing', function () {console.log(video1.currentTime);} );
 
-					// width * i, - height * i, - depth * i,
-					// - width * i, - height * i, - depth * i,
+			// if (video1.currentTime>3){
+			// 	console.log("yay");
+			// }
+			// let vidTex1 = new THREE.VideoTexture(video1);
+			// vidTex1.magFilter =  THREE.NearestFilter;
+			// vidTex1.wrapS = THREE.RepeatWrapping;
+			// vidTex1.wrapT = THREE.RepeatWrapping;
+			// vidTex1.repeat.set(1,1);
 
-					// - width * i, - height * i, depth * i,
-					// - width * i, height * i, depth * i,
 
-					// - width * i, height * i, depth * i,
-					// width * i, height * i, depth * i,
+		// forms		
+		const cursorMat = new THREE.MeshPhongMaterial({
+			transparent: true,
+			opacity: 0.5,
+			alphaMap: cursorTex,
+			aoMap: cursorTex,
+			map: cursorTex,
+			bumpMap: cursorTex,
+			bumpScale: 1,
+			dithering: true,
+			// combine: 0.9
+			// emissive: "white",
+			// emissiveIntensity: 0.3,
+		});
+		const textMat = new THREE.MeshPhongMaterial({
+			transparent: true,
+			opacity: 0.8,
+			alphaMap: textTex,
+			aoMap: textTex,
+			map: textTex,
+			bumpMap: textTex,
+			bumpScale: 1,
+		});
+		// const BGMat = new THREE.MeshPhongMaterial({
+		// 	alphaMap: BGTex,
+		// 	aoMap: BGTex,
+		// 	map: BGTex,
+		// });
 
-					// width * i, height * i, depth * i,
-					// width * i, - height * i, depth * i,
+		var posOffset = 1;
+		const screenGeo = new THREE.SphereGeometry(12,40,40);
 
-					// width * i, - height * i, depth * i,
-					// - width * i, - height * i, depth * i,
+		// const BGLMesh = new THREE.Mesh(screenGeo, BGMat);
+		// 	BGLMesh.castShadow = true; 
+		// 	BGLMesh.receiveShadow = true;	
+		// 	scene.add( BGLMesh );
+		const textLMesh = new THREE.Mesh(screenGeo, textMat);
+			textLMesh.castShadow = true; 
+			textLMesh.receiveShadow = true;	
+			textLMesh.scale.x = posOffset + (posOffset * 2);
+			textLMesh.scale.y = posOffset + (posOffset * 2);
+			textLMesh.scale.z = posOffset + (posOffset * 2);
+			scene.add( textLMesh );
+		const cursorLMesh = new THREE.Mesh(screenGeo, cursorMat);
+			cursorLMesh.castShadow = true; 
+			cursorLMesh.receiveShadow = true;	
+			cursorLMesh.scale.x = posOffset + (posOffset * 3);
+			cursorLMesh.scale.y = posOffset + (posOffset * 3);
+			cursorLMesh.scale.z = posOffset + (posOffset * 3);
+			scene.add( cursorLMesh );
 
-					// - width * i, - height * i, - depth * i,
-					// - width * i, - height * i, depth * i,
 
-					// - width * i, height * i, - depth * i,
-					// - width * i, height * i, depth * i,
 
-					// width * i, height * i, - depth * i,
-					// width * i, height * i, depth * i,
 
-					// width * i, - height * i, - depth * i,
-					// width * i, - height * i, depth * i
-				 );
-				}
-				
-			geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( position, 3 ) );	
-			return geometry;
-		};
+		// const screenMesh = new THREE.Group();
+		// for (let i=0; i<= 1; i++){
+		// 	const screenSingle = new THREE.Mesh(screenGeo, screenMat);
+
+		// 	screenSingle.scale.x = i + (i * 0.7);
+		// 	screenSingle.scale.y = i + (i * 0.7);
+		// 	screenSingle.scale.z = i + (i * 0.7);
+
+		// 	screenSingle.rotation.x = i * Math.random();
+		// 	screenSingle.rotation.x = i * Math.random();
+		// 	screenSingle.rotation.x = i * Math.random();
+
+		// 	screenMesh.add(screenSingle);
+
+		// }
+		// scene.add( screenMesh );
+
+		// screenMesh.castShadow = true; 
+		// screenMesh.receiveShadow = true;	
+
 			
 		// fog
-		scene.fog = new THREE.Fog("black", 1, 100);
+		// scene.fog = new THREE.Fog("black", 1, 100);
 			
 
 		// camera
 		const camera = new THREE.PerspectiveCamera(100, WIDTH / HEIGHT);
-		camera.position.z = 20;
+		camera.position.z = 80;
 		scene.add(camera);
 
 		// light
-		let lightBox1, lightBox2, lightBox3, glowLight, dirLight;
-		lightBox1 = new THREE.PointLight( "red", 5, 250, 1 );
-		lightBox1.add( new THREE.Mesh( lightBox, new THREE.MeshBasicMaterial( { color: "red" } ) ) );
-		lightBox1.castShadow = true;
-		lightBox1.shadow.camera.near = 0.5;
-		lightBox1.shadow.camera.far = 500; 
-		scene.add( lightBox1 );
+		let lightBox1, lightBox2, lightBox3, ambLight, dirLight;
 
-		lightBox2 = new THREE.PointLight( "blue", 5, 250, 1 );
-		lightBox2.add( new THREE.Mesh( lightBox, new THREE.MeshBasicMaterial( { color: "blue" } ) ) );
-		lightBox2.castShadow = true;
-		scene.add( lightBox2 );
+		ambLight = new THREE.AmbientLight( "white", 1);
+		scene.add(ambLight);
 
-		lightBox3 = new THREE.PointLight( "green", 5, 250, 1 );
-		lightBox3.add( new THREE.Mesh( lightBox, new THREE.MeshBasicMaterial( { color: "green" } ) ) );
-		lightBox3.castShadow = true;
-		scene.add( lightBox3 );
-
-
-		dirLight = new THREE.DirectionalLight( "purple", 4 );
+		dirLight = new THREE.DirectionalLight( "white", 1 );
 		dirLight.lookAt(0,0,0);
-		dirLight.position.set( 0, 1, 0 ); 
+		dirLight.position.set( camera.position.x, camera.position.y, camera.position.z ); 
 		dirLight.castShadow = true;
 		scene.add( dirLight );
-
-
-
-		// control
-		const controls = new OrbitControls(camera, canvas);
-		controls.enableDamping = true;
-
+		const dirhelper = new THREE.DirectionalLightHelper( dirLight, 5 );
+		scene.add( dirhelper );	
 
 		// renderer 
-		const renderer = new THREE.WebGLRenderer({canvas, antilias:true});
+		const renderer = new THREE.WebGLRenderer({canvas, antilias:true, alpha: true });
+		renderer.setClearColor( 0x000000, 0 ); 
 		renderer.shadowMap.enabled = true;
 		renderer.shadowMap.type = THREE.PCFSoftShadowMap; 
 		renderer.setPixelRatio( window.devicePixelRatio );
 		renderer.setSize(WIDTH, HEIGHT);
 		renderer.render(scene, camera);
 
+		// control
+		const controls = new OrbitControls(camera, canvas);
+		controls.enableDamping = true;
+		controls.update();
+
+
 		// events
 		window.addEventListener('resize', onWindowResize);
-		document.body.addEventListener( 'mousemove', onPointerMove );
+		document.body.addEventListener("mousemove", onPointerMove);
 
 		//
 
@@ -231,6 +346,9 @@
 			if ( event.isPrimary === false ) return;
 			mouseX = event.clientX - WIDTH/2;
 			mouseY = event.clientY - HEIGHT/2;
+			// cursor.style.transform = `translate3d(${event.clientX +10}px, ${event.clientY+10}px, 0)`;
+			curX = event.clientX;
+			curY = event.clientY;
 		}
 
 		function loop() {
@@ -238,63 +356,22 @@
 			const delta = clock.getDelta();
 			var mousePos = Math.abs(mouseY/mouseX);
 
-
-			lineSegPlane.rotation.x = Math.cos(time*0.3);
-			lineSegPlane.rotation.y = Math.sin(time*0.2);
-			lineSegPlane.rotation.z = Math.sin(time*0.1);
-			lineSegPlane.material.opacity = Math.abs(Math.cos(time * -0.4));
-
-			antilineSegPlane.rotation.x = Math.sin(time * - 0.5);
-			antilineSegPlane.rotation.y = Math.cos(time * 0.2);
-			antilineSegPlane.rotation.z = Math.sin(time * - 0.3);
-			antilineSegPlane.material.opacity = Math.abs(Math.sin(time * 0.5));
+			cursorTex.needsUpdate = true;
+			textTex.needsUpdate = true;
+			// BGTex.needsUpdate = true;
 
 			
-			for (let i = 0; i<=100; i++){
-				screenMesh.rotation.x = Math.sin(time * - 0.5);
-				// screenMesh.rotation.y = Math.cos(time * - 0.5);
-				// screenMesh.rotation.z = Math.cos(time * - 0.5);
-				// screenMesh.scale.x = Math.abs(Math.cos(time * 0.4));
-				// screenMesh.scale.y = Math.abs(Math.cos(time * 0.4));
-				// screenMesh.scale.z = Math.abs(Math.cos(time * 0.4));
-				// screenMat.opacity = Math.abs(Math.cos(time * - 0.4))* 0.9;
-			}
-			screenMesh.rotation.x = Math.sin(time * - 0.5);
-			screenMesh.rotation.y = Math.cos(time * - 0.5);
-			screenMesh.rotation.z = Math.cos(time * - 0.5);
-			screenMesh.scale.x = Math.abs(Math.cos(time * 0.4));
-			screenMesh.scale.y = Math.abs(Math.cos(time * 0.4));
-			screenMesh.scale.z = Math.abs(Math.cos(time * 0.4));
-			// screenMesh.material.opacity = Math.abs(Math.cos(time * 0.4))*0.9;
-			screenMat.opacity = Math.abs(Math.cos(time * - 0.4))* 0.9;
-			// screenMesh.material.emissive.setRGB(Math.abs(Math.cos(time * 0.4)),Math.abs(Math.sin(time * -0.4)),Math.abs(Math.sin(time * 0.4)));
-
-			lightBox1.position.x = Math.cos( time * 0.7 ) * 50;
-			lightBox1.position.y = Math.cos( time * 0.5 ) * 50;
-			lightBox1.position.z = Math.sin( time * 0.3 ) * 50;
-			lightBox1.rotation.x = Math.cos( time * 0.6 );
-
-			lightBox2.position.x = Math.sin( time * 0.7 ) * 50;
-			lightBox2.position.y = Math.cos( time * 0.5 ) * 50;
-			lightBox2.position.z = Math.cos( time * 0.3 ) * 50;
-			lightBox2.rotation.y = Math.sin( time * 0.6 );
-
-			lightBox3.position.x = Math.cos( time * 0.3 ) * 50;
-			lightBox3.position.y = Math.sin( time * 0.5 ) * 50;
-			lightBox3.position.z = Math.cos( time * 0.3 ) * 50;
-			lightBox3.rotation.z = Math.cos( time * -0.6 );
-
 			dirLight.position.x = Math.cos( time * -0.3 ) * 50;
 			dirLight.position.y = Math.sin( time * -0.5 ) * 50;
 			dirLight.position.z = Math.cos( time * -0.3 ) * 50;
 			dirLight.rotation.z = Math.cos( time * 0.6 );
-
-			stats.update();
+			
+			requestAnimationFrame(loop);
 			controls.update();
 			renderer.render(scene,camera);
-			requestAnimationFrame(loop);
 		}
 		loop();
+
 
 	</script>
 

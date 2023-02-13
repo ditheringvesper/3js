@@ -1,0 +1,231 @@
+<html lang="en">
+
+<head>
+	<title> 3js_dom-layer </title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<style>
+		:root{
+			cursor: none;
+		}
+		body{
+			padding: 0; 
+			border: 0; 
+			margin: 0;
+			background-color: teal;
+			z-index: -10;
+
+		}
+
+		.DOMsurface{
+			background-color: red;
+			z-index: 0;
+		}
+
+		#cursor{
+			background-color: yellowgreen;
+		}
+
+		.unbotheredTXT{
+			position: fixed;
+			z-index: 99;
+			padding: 0;
+			margin: 0;
+			border: 0;
+			color: grey;
+			font-size:large;
+			font:monospace;
+			width: auto;
+			height: auto;
+			text-align: center;
+		}
+	</style>
+</head>
+
+<body>
+	<canvas class = "webgl"> </canvas>
+	<canvas class = "DOMsurface"></canvas>
+	<div class="unbotheredTXT"> <span> a lot of text here not to be bothered </span></div>
+
+	<div id="cursor">
+		<!-- <img id="curImg" src="textures/cursor.png" style="visibility:hidden"> -->
+		</div>
+	<script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
+	<!-- <script async src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/2.2.1/fabric.min.js"></script> -->
+	<script type="importmap">
+        {
+            "imports": {
+                "three": "./three/build/three.module.js",
+                "three/addons/": "./three/examples/jsm/"
+            }
+        }
+    </script>	
+
+	
+	<script type="module">
+		import * as THREE from 'three';
+
+		import Stats from 'three/addons/libs/stats.module.js';
+
+		import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+		const clock = new THREE.Clock();
+		const canvas = document.querySelector(".webgl");
+		const WIDTH = window.innerWidth, HEIGHT = window.innerHeight;
+		var mouseX, mouseY;
+		var posX, posY;
+
+
+		// scene
+		const scene = new THREE.Scene();
+
+		// CANVAS ELEMENT, 2D DRAWING CONTEXT
+		//-------- ----------
+		const canv = document.querySelector('.DOMsurface');
+		const ctx = canv.getContext('2d');
+		canv.width = WIDTH; canv.height = HEIGHT;
+
+		ctx.strokeRect(4, 4, canv.width - 8, canv.height - 8);
+
+		window.addEventListener('mousemove', draw);
+
+		function setPosition(e) {
+			const rect = canvas.getBoundingClientRect();
+			posX = e.clientX - rect.left
+			posY = e.clientY - rect.top
+			}
+		function draw(e) {
+			ctx.beginPath();
+			// use the values stored in our pen_style object
+			ctx.lineWidth = 20;
+			ctx.strokeStyle = 'yellow';
+
+			ctx.moveTo(posX, posY);
+			setPosition(e);
+			ctx.lineTo(posX, posY);
+
+			ctx.stroke();
+			}
+
+		// image texture
+		let canvasTex = new THREE.CanvasTexture(canv);
+		canvasTex.magFilter = THREE.NearestFilter;
+		canvasTex.minFilter = THREE.NearestFilter;
+
+		let textureLoader2 = new THREE.TextureLoader();
+		let windowTexture = textureLoader2.load("textures/newWindow.png");
+		windowTexture.magFilter =  THREE.NearestFilter;
+		windowTexture.wrapS = THREE.RepeatWrapping;
+		windowTexture.wrapT = THREE.RepeatWrapping;
+		windowTexture.repeat.set(1,1);
+
+			// top DOM layer -> text
+
+		// forms		
+		const screenMat = new THREE.MeshStandardMaterial({
+			opacity: 0.8,
+			transparent: true,
+			// map: canvasTex,
+			emissive: "white",
+			emissiveIntensity: 0.6,
+			metalness: 0,
+			roughness: 0.8,
+		});
+
+		const screenGeo = new THREE.BoxGeometry(20,20,20);
+		const screenMesh = new THREE.Group();
+		for (let i=0; i<= 2; i++){
+			const screenSingle = new THREE.Mesh(screenGeo, screenMat);
+
+			screenSingle.scale.x = i + (i * 0.7);
+			screenSingle.scale.y = i + (i * 0.7);
+			screenSingle.scale.z = i + (i * 0.7);
+
+			screenSingle.rotation.x = i * Math.random();
+			screenSingle.rotation.x = i * Math.random();
+			screenSingle.rotation.x = i * Math.random();
+
+			screenMesh.add(screenSingle);
+
+		}
+		scene.add( screenMesh );
+
+		screenMesh.castShadow = true; 
+		// screenMesh.receiveShadow = true;	
+
+			
+		// fog
+		// scene.fog = new THREE.Fog("black", 1, 100);
+			
+
+		// camera
+		const camera = new THREE.PerspectiveCamera(100, WIDTH / HEIGHT);
+		camera.position.z = 40;
+		scene.add(camera);
+
+		// light
+		let lightBox1, lightBox2, lightBox3, glowLight, dirLight;
+
+		dirLight = new THREE.DirectionalLight( "purple", 10 );
+		dirLight.lookAt(0,0,0);
+		dirLight.position.set( 0, 1, 20 ); 
+		dirLight.castShadow = true;
+		scene.add( dirLight );
+		// light helper 
+		const helper = new THREE.DirectionalLightHelper( dirLight, 20 );
+		scene.add( helper );
+
+
+		// control
+		const controls = new OrbitControls(camera, canvas);
+		controls.enableDamping = true;
+
+
+		// renderer 
+		const renderer = new THREE.WebGLRenderer({canvas, antilias:true, alpha: false });
+		// renderer.setClearColor( 0x000000, 0 ); 
+		renderer.shadowMap.enabled = true;
+		renderer.shadowMap.type = THREE.PCFSoftShadowMap; 
+		renderer.setPixelRatio( window.devicePixelRatio );
+		renderer.setSize(WIDTH, HEIGHT);
+		renderer.render(scene, camera);
+
+		// events
+		window.addEventListener('resize', onWindowResize);
+		document.body.addEventListener( 'mousemove', onPointerMove );
+
+		//
+
+		function onWindowResize() {
+			camera.aspect = window.innerWidth/window.innerHeight;
+			camera.updateProjectionMatrix();
+			renderer.setSize(window.innerWidth,window.innerHeight);
+		}
+
+		function onPointerMove( event ) {
+			if ( event.isPrimary === false ) return;
+			mouseX = event.clientX - WIDTH/2;
+			mouseY = event.clientY - HEIGHT/2;
+		}
+
+		function loop() {
+			const time = Date.now() * 0.0005;
+			const delta = clock.getDelta();
+			var mousePos = Math.abs(mouseY/mouseX);
+
+			dirLight.position.x = Math.cos( time * -0.3 ) * 50;
+			dirLight.position.y = Math.sin( time * -0.5 ) * 50;
+			dirLight.position.z = Math.cos( time * -0.3 ) * 50;
+			dirLight.rotation.z = Math.cos( time * 0.6 );
+
+			controls.update();
+			renderer.render(scene,camera);
+			requestAnimationFrame(loop);
+		}
+		loop();
+
+
+	</script>
+
+</body>
+
+</html>
