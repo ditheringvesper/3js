@@ -1,6 +1,6 @@
 :root{
-    --vidW: 100vw;
-    --vidH: 100vh;
+    --vidW: 120vw;
+    --vidH: 120vh;
 
     --translateX: 10vw;
     --translateY: 2vh;
@@ -11,21 +11,14 @@ body{
   padding: 0;
 	margin: 0;
   z-index: 10;
-  background-color: transparent;
-  /* height: 100vh; */
-  /* background-position: center;
+  background-color: black;
+  height: 100vh; 
+  width: 100vw;
+  background-position: center;
   background-repeat: none;
-  background-attachment: scroll; */
+  background-attachment: fixed;
 }
 
-/* canvas{
-    padding: 0;
-    margin: 0;
-    border:0;
-    left:0;
-    top:0;
-    position: center fixed;
-  } */
 
 .bgVid{
   padding: 0;
@@ -36,52 +29,24 @@ body{
   width: var(--vidW);
   height: var(--vidH);
   z-index: -1;
+  background-attachment: fixed;
+  background-position: center;
   position: center fixed;
 }
 
-
-
-
-
-.clippedVid {
-    -webkit-clip-path: url(#textClip);
-    clip-path: url(#textClip);
-    padding:0;
-    left:0;
-    top:0;
-    width: var(--vidW);
-    position: fixed;
-    z-index: 1;
-  }
-
-svg{
-    font-family: monospace;
-    opacity:0;
-    position:fixed;
-    z-index:2;
-  }
-
-.enlarge{ /* for scaling SVG path  */
-  transform: scale(var(--scale)) translate(var(--translateX), var(--translateY));
-  -ms-transform: scale(var(--scale)) translate(var(--translateX), var(--translateY));
-  -webkit-transform: scale(var(--scale)) translate(var(--translateX), var(--translateY));
-}
-
-.showVisitorName{
-  z-index: 99;
+.caption{
   position: fixed;
+  bottom: 3vh;
+  font-size: 2.5vw;
+  letter-spacing: 0.5vw;
+  z-index: 11;
+  text-align: center;
+  width:100%;
   color: white;
-  font-size: 2vw;
-  text-align: center center;
-  width: 100vw;
-  height: 100vh;
+  font-family: Arial, Helvetica, sans-serif;
+  font-style: italic;
+  text-shadow: 1px 1px 2px black;
 }
 
-/* #urlbar-input {
-  transition: transform .1s linear;
-  transform: translateX(50%);
-  top: 4px;
-  position: absolute;
-  width: 50%;
-  text-align: center !important;
-  } */
+
+

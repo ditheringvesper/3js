@@ -16,6 +16,9 @@ var timestamp = 0, mY = 0;
 let textMeshObjects = [];
 let raycastMeshObjects = [];
 
+let textpairs = textInfo.txtPairs;
+var caption = document.querySelector(".caption");
+
 init();
 
 function init() {
@@ -60,23 +63,21 @@ function init() {
   // controls = new FirstPersonControls(scene, camera, renderer);
 
   // Mesh 
-  let textItems = textInfo.textItems;
   let gap = Math.random() * 30;
 
-  for (let i = 0; i < textItems.length; i++) {
+  for (let i = 0; i < textpairs.length; i++) {
     // add moving text with class, visible but not raycasted directly
     let x = gap * Math.random();
     let y = 9;
     let z = baseline - i * gap;
-    let myText = new textMesh(x, y, z, textItems[i], scene);
+    let myText = new textMesh(x, y, z, textpairs[i].flowText, scene);
     // layer is set to 0; in textMesh.js class file.
     textMeshObjects.push(myText);
-    // console.log(textMeshObjects.textMeshId);
 
-    // add raycasting mesh
-    let planegeo = new THREE.PlaneGeometry(1,1); // for interactive mesh
+    // add raycasting mesh // testing...
+    let planegeo = new THREE.PlaneGeometry(8, 1); // for interactive mesh
     let interactionMesh = new THREE.Mesh(planegeo, new THREE.MeshBasicMaterial({color: "red"}));
-    interactionMesh.position.set(i, i, i);
+    interactionMesh.position.set(x, y, -10 + i * 5);
     interactionMesh.layers.set(0);
     interactionMesh.userData.textM = myText; // bound the visible mesh with the interactive mesh
     raycastMeshObjects.push(interactionMesh);
@@ -117,19 +118,34 @@ function mouseMove(e) {
   // update raycaster
   raycaster.setFromCamera(mouse, camera);
   // console.log(textMeshObjects.length);
-  const intersects = raycaster.intersectObjects(textMeshObjects);
-  // const intersects = raycaster.intersectObjects(raycastMeshObjects);
+  // const intersects = raycaster.intersectObjects(textMeshObjects);
+  const intersects = raycaster.intersectObjects(raycastMeshObjects);
 
   console.log(intersects);
 
-  // run an intersection check with the grid objects
-  for (let i = 0; i < intersects.length; i++) {
-    // console.log(intersects[i]);
-    // intersects[i].object.position.y = 0;	
-    // intersects[i].object.rotation.x = 1.5;
-    // intersects[i].object.rotation.y = 3;
+  // run an intersection check 
+  if (intersects.length > 0 ){
+    for (let i = 0; i < intersects.length; i++) {
+      // // console.log(intersects[i]);
+      // // intersects[i].object.position.y = 0;	
+      // let id = intersects[i].object.userData.textM.id;
+      // var object = scene.getObjectById( id, true );
+			// var txtPointer = textpairs[textMeshObjects.indexOf(object)].flowText;
+      //       console.log(object);
 
+      let captionIndex = textpairs.find(function(textImg) {
+        return textImg.flowText === textpairs[randomInt(0,8)].flowText; 
+      });
+      caption.innerHTML = captionIndex.cap;
+    }
+  } else{
+    caption.innerHTML = "[...]";
   }
+
+  // for (let i = 0; i < textMeshObjects.length; i++) {
+  //   textMeshObjects[i].onRaycast(mouse, camera, textMeshObjects);
+  // }
+
 
   var now = Date.now();
   var currentmY = e.screenY;
@@ -139,4 +155,8 @@ function mouseMove(e) {
   var preSpeed = speed; // record speed change.
   mY = currentmY;
   timestamp = now;
+}
+
+function randomInt(min, max) {
+  return Math.round(Math.random() * (max - min) + min);
 }

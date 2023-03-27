@@ -46,23 +46,8 @@ export class textMesh {
     this.mesh.position.set(this.position.x, this.position.y, this.position.z);
 
     this.mesh.layers.set(0); // set layer
-    // this.textMeshId = this.mesh.userData.id = this.text;
-    // // console.log(this.textMeshId);
-    // return this.textMeshId;
+
   }
-
-  // addRaycastGeo() {
-  //   let planegeo = new THREE.PlaneGeometry(this.planeX, this.planeY); // for interactive mesh
-  //   let mat = new THREE.MeshBasicMaterial({
-  //   });
-  //   this.mesh = new THREE.Mesh(planegeo, mat);
-  //   this.mesh.layers.set(2); // set layer
-  //   this.scene.add(this.mesh);
-
-  //   this.mesh.layers.set(2);
-  //   this.mesh.userData.meshy = myText; // bound the visible mesh with the interactive mesh
-  //   this.mesh.push(interactionMesh);
-  // }
 
   update(speed) {
     this.frameCount++;
@@ -92,6 +77,36 @@ export class textMesh {
     }
 
   }
+
+
+  // onRaycast(mouse, camera, textMeshObjects){
+  //   this.mouse = mouse;
+  //   this.camera = camera;
+  //   this.textMeshObjects = textMeshObjects;
+
+  //   var raycaster = new THREE.Raycaster();
+  //   raycaster.setFromCamera(this.mouse, this.camera);
+  //   // console.log(textMeshObjects.length);
+  //   const intersects = raycaster.intersectObjects(this.textMeshObjects);
+  
+  //   console.log(this.mouse);
+  
+  //   // // run an intersection check 
+  //   // if (intersects.length > 0 ){
+  //   //   for (let i = 0; i < 8; i++) {
+  //   //     // console.log(intersects[i]);
+  //   //     // intersects[i].object.position.y = 0;	
+  //   //     let captionIndex = textpairs.find(function(textImg) {
+  //   //       return textImg.flowText === textpairs[i].flowText; //Change 3 to what you want to search for
+  //   //     });
+  //   //     caption.innerHTML = captionIndex.cap;
+  //   //   }
+  //   // } else{
+  //   //   caption.innerHTML = "[...]";
+  //   // }
+  // }
+
+
 }
 
 // textMesh.raycastMesh = class{
